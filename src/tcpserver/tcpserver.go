@@ -1,0 +1,69 @@
+package main
+
+import (
+	"encoding/gob"
+	"fmt"
+	"net"
+)
+
+func client() {
+	// Connect to the server.
+	c, err := net.Dial("tcp", "127.0.0.1:9999")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	// Send the message.
+	msg := "Hello there!"
+	fmt.Println("Sending", msg)
+	err = gob.NewEncoder(c).Encode(msg)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	c.Close()
+}
+
+func handleServerConnection(c net.Conn) {
+	// Receive a message.
+	var msg string
+	err := gob.NewDecoder(c).Decode(&msg)
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println("Received", msg)
+	}
+
+	c.Close()
+}
+
+func server() {
+	// Listen on a port
+	ln, err := net.Listen("tcp", ":9999")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	for {
+		// Accept a connection
+		c, err := ln.Accept()
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		// Handle the connection
+		go handleServerConnection(c)
+
+	}
+}
+
+func main() {
+	go server()
+	go client()
+	var input string
+	fmt.Scanln(&input)
+
+}
